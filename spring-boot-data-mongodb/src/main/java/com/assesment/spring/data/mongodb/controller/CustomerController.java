@@ -90,32 +90,35 @@ public class CustomerController {
 	 * @return ResponseEntity updated customer details
 	 */
 	
-	@PutMapping("customer/{id}") 
-	public ResponseEntity<String> updateCustomer( @PathVariable String id, @RequestBody CustomerEntity updatedCustomer) {
-		logger.info("Received request to update customer with ID: {}", id);
+@PutMapping("customer/{id}")
+public ResponseEntity<String> updateCustomer(@PathVariable String id, @RequestBody CustomerEntity updatedCustomer) {
+    logger.info("Received request to update customer with ID: {}", id);
 
-		try {
-			Optional<CustomerEntity> optionalCustomer = customerRepository.findById(id);
+    try {
+        Optional<CustomerEntity> optionalCustomer = customerRepository.findById(id);
 
-			if (optionalCustomer.isPresent()) {
-				CustomerEntity existingCustomer = optionalCustomer.get();
-				existingCustomer.setFirstName(updatedCustomer.getFirstName());
-				existingCustomer.setLastName(updatedCustomer.getLastName());
-				existingCustomer.setAccountId(updatedCustomer.getAccountId());
+        return optionalCustomer.map(existingCustomer -> {
+            updateCustomerDetails(existingCustomer, updatedCustomer);
+            customerRepository.save(existingCustomer);
+            logger.info("Customer with ID: {} successfully updated", id);
+            return ResponseEntity.ok("Customer updated successfully.");
+        }).orElseGet(() -> {
+            logger.warn("Customer with ID: {} not found", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Customer not found.");
+        });
+        
+    } catch (Exception e) {
+        logger.error("Error updating customer with ID: {}", id, e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred while updating the customer.");
+    }
+}
 
-				customerRepository.save(existingCustomer);
-				logger.info("Customer with ID: {} successfully updated", id);
-				return ResponseEntity.ok("Customer updated successfully.");
-			} else {
-				logger.warn("Customer with ID: {} not found", id);
-				return ResponseEntity.status(HttpStatus.NOT_FOUND)
-						.body("Customer not found.");
-			}
-		} catch (Exception e) {
-			logger.error("Error updating customer with ID: {}", id, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("An error occurred while updating the customer.");
-		}
-	}
+private void updateCustomerDetails(CustomerEntity existingCustomer, CustomerEntity updatedCustomer) {
+    existingCustomer.setFirstName(updatedCustomer.getFirstName());
+    existingCustomer.setLastName(updatedCustomer.getLastName());
+    existingCustomer.setAccountId(updatedCustomer.getAccountId());
+}
 
 }
