@@ -27,6 +27,7 @@ public class AccountController {
   public ResponseEntity<List<AccountEntity>> getAllAccounts() {
     try {
       List<AccountEntity> accountEntities = new ArrayList<>();
+
       accountEntities = accountRepository.findAll();
 
       if (accountEntities.isEmpty()) {
