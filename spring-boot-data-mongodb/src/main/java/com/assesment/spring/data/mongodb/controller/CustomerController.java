@@ -65,23 +65,30 @@ public class CustomerController {
 	 * @return ResponseEntity Created Customer details
 	 */
 	
-	@PostMapping("/customer")
-	public ResponseEntity<?> createCustomer(@RequestBody CustomerEntity customer) {
-		try {
-			// Verify account existence
-			AccountEntity account = accountRepository.findById(customer.getAccountId().getId())
-					.orElseThrow(() -> new RuntimeException("Account not found with ID: " + customer.getAccountId().getId()));
+@PostMapping("/customer")
+public ResponseEntity<?> createCustomer(@RequestBody CustomerEntity customer) {
+    try {
+        AccountEntity account = findAccountById(customer.getAccountId().getId());
+        customer.setAccountId(account);
 
-			customer.setAccountId(account);									  // Set the associated account
-			CustomerEntity savedCustomer = customerRepository.save(customer); // Save customer to the database
+        CustomerEntity savedCustomer = customerRepository.save(customer);
+        logger.info("Customer created with ID: {}", savedCustomer.getId());
 
-			logger.info("Customer created with ID: {}", savedCustomer.getId());
-			return new ResponseEntity<>(savedCustomer, HttpStatus.CREATED);
-		} catch (Exception e) {
-			logger.error("Error creating customer: ", e);
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
+        return new ResponseEntity<>(savedCustomer, HttpStatus.CREATED);
+    } catch (RuntimeException e) {
+        logger.error("Error creating customer: ", e);
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND); // Return 404 if account is not found
+    } catch (Exception e) {
+        logger.error("Unexpected error creating customer: ", e);
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+private AccountEntity findAccountById(String accountId) {
+    return accountRepository.findById(accountId)
+            .orElseThrow(() -> new RuntimeException("Account not found with ID: " + accountId));
+}
+
 
 	/* 
 	 * API end point to update existing customers 
