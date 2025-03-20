@@ -128,4 +128,34 @@ private void updateCustomerDetails(CustomerEntity existingCustomer, CustomerEnti
     existingCustomer.setAccountId(updatedCustomer.getAccountId());
 }
 
+/* 
+ * API end point to get customer details by customer ID
+ * 
+ * @param customerId of the customer
+ * @return ResponseEntity with customer details
+ */
+@GetMapping("customer/{customerId}")
+public ResponseEntity<CustomerEntity> getCustomerById(@PathVariable String customerId) {
+    logger.info("Received request to fetch customer with ID: {}", customerId);
+
+    try {
+        Optional<CustomerEntity> optionalCustomer = customerRepository.findById(customerId);
+
+        if (optionalCustomer.isPresent()) {
+            CustomerEntity customer = optionalCustomer.get();
+            logger.info("Fetched customer with ID: {}", customerId);
+            return ResponseEntity.ok(customer);  // Return customer details
+        } else {
+            logger.warn("Customer with ID: {} not found", customerId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);  // Return 404 if customer is not found
+        }
+
+    } catch (Exception e) {
+        logger.error("Error fetching customer with ID: {}", customerId, e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);  // Return 500 if an error occurs
+    }
+}
+
 }
